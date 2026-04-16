@@ -135,30 +135,62 @@ function RecnikPage() {
 
       {/* Category filter */}
       <div className="mb-6">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Категорија</p>
+        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Категорије {activeCategories.length > 0 && `(${activeCategories.length})`}
+          </p>
+          <div className="flex items-center gap-2">
+            {activeCategories.length >= 2 && (
+              <button
+                onClick={() => setCategoryMatchAll((v) => !v)}
+                className="text-xs px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+                title="Промени логику комбиновања"
+              >
+                {categoryMatchAll ? "све изабране" : "било која"}
+              </button>
+            )}
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                value={categoryQuery}
+                onChange={(e) => setCategoryQuery(e.target.value)}
+                placeholder="Тражи категорију..."
+                className="h-7 pl-6 text-xs w-44"
+              />
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setActiveCategory(null)}
+            onClick={() => setActiveCategories([])}
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              !activeCategory ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              activeCategories.length === 0
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
-            Све категорије
+            Све
           </button>
-          {availableCategories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-              title={CATEGORY_LABELS[cat]}
-            >
-              {CATEGORY_LABELS[cat]} ({categoryCounts[cat]})
-            </button>
-          ))}
+          {visibleCategories.map((cat) => {
+            const active = activeCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => toggleCategory(cat)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+                title={CATEGORY_LABELS[cat]}
+              >
+                {CATEGORY_LABELS[cat]} ({categoryCounts[cat]})
+              </button>
+            );
+          })}
+          {visibleCategories.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">Нема категорија за „{categoryQuery}"</p>
+          )}
         </div>
       </div>
 
