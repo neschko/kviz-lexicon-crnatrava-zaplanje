@@ -31,16 +31,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "CRNOTRAVAC ++" },
       { name: "description", content: "Lexi Modernizer converts PDF dictionaries into interactive web applications and modernized PDFs." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { property: "og:title", content: "CRNOTRAVAC ++" },
       { property: "og:description", content: "Lexi Modernizer converts PDF dictionaries into interactive web applications and modernized PDFs." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:title", content: "CRNOTRAVAC ++" },
       { name: "twitter:description", content: "Lexi Modernizer converts PDF dictionaries into interactive web applications and modernized PDFs." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776364633779-dunđer.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776364633779-dunđer.webp" },
     ],
     links: [
       {
