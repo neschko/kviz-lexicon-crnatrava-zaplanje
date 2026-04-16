@@ -31,18 +31,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CRNOTRAVAC ++" },
+      { title: "Црнотравац++" },
       { name: "description", content: "Lexi Modernizer претвара речнике у интерактивне веб апликације" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "CRNOTRAVAC ++" },
+      { property: "og:title", content: "Црнотравац++" },
       { property: "og:description", content: "Lexi Modernizer претвара речнике у интерактивне веб апликације" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "CRNOTRAVAC ++" },
+      { name: "twitter:title", content: "Црнотравац++" },
       { name: "twitter:description", content: "Lexi Modernizer претвара речнике у интерактивне веб апликације" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776364633779-dunđer.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776364633779-dunđer.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776366848171-црнотравац.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NjIajnXJH2NCTuWhZNF9HYCo2yG2/social-images/social-1776366848171-црнотравац.webp" },
     ],
     links: [
       {
