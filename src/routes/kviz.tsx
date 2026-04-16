@@ -3,9 +3,14 @@ import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, RotateCcw, Trophy, BookOpen, HelpCircle } from "lucide-react";
-import dictionaryData from "@/data/dictionary.json";
-import type { DictionaryEntry } from "@/data/types";
+import { CheckCircle, XCircle, RotateCcw, Trophy } from "lucide-react";
+import { QuizModeSelector } from "@/components/QuizModeSelector";
+import {
+  generateQuestion,
+  QUIZ_CATEGORIES,
+  type QuizMode,
+  type QuizQuestion,
+} from "@/lib/quiz";
 
 export const Route = createFileRoute("/kviz")({
   head: () => ({
@@ -19,41 +24,18 @@ export const Route = createFileRoute("/kviz")({
   component: KvizPage,
 });
 
-// Filter to entries with reasonable definitions and short, distinctive words for the "guess word" mode
-const entries = (dictionaryData as DictionaryEntry[]).filter(
-  (e) => e.definition.length > 10 && e.word.length >= 3 && e.word.length <= 18
-);
-
-type Mode = "definition" | "word";
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function generateQuestion() {
-  const shuffled = shuffleArray(entries);
-  const correct = shuffled[0];
-  const wrongOptions = shuffled.slice(1, 4);
-  const options = shuffleArray([correct, ...wrongOptions]);
-  return { correct, options };
-}
-
 function KvizPage() {
-  const [mode, setMode] = useState<Mode>("definition");
-  const [question, setQuestion] = useState<{ correct: DictionaryEntry; options: DictionaryEntry[] } | null>(null);
+  const [mode, setMode] = useState<QuizMode>("definition");
+  const [category, setCategory] = useState<string | null>(null);
+  const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
 
   // Generate first question on client only to avoid SSR hydration mismatch
   useEffect(() => {
-    setQuestion(generateQuestion());
-  }, []);
+    setQuestion(generateQuestion(mode, category));
+  }, [mode, category]);
 
   const handleSelect = useCallback(
     (id: number) => {
@@ -68,33 +50,30 @@ function KvizPage() {
   );
 
   const nextQuestion = useCallback(() => {
-    setQuestion(generateQuestion());
+    setQuestion(generateQuestion(mode, category));
     setSelected(null);
-  }, []);
+  }, [mode, category]);
 
   const resetQuiz = useCallback(() => {
     setScore(0);
     setTotal(0);
-    setQuestion(generateQuestion());
+    setQuestion(generateQuestion(mode, category));
     setSelected(null);
-  }, []);
+  }, [mode, category]);
 
-  const switchMode = useCallback((m: Mode) => {
+  const switchMode = useCallback((m: QuizMode) => {
     setMode(m);
     setScore(0);
     setTotal(0);
-    setQuestion(generateQuestion());
     setSelected(null);
   }, []);
 
-  if (!question) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="font-heading text-3xl font-bold text-foreground mb-8">Квиз</h1>
-        <div className="h-64 animate-pulse bg-muted rounded-lg" />
-      </div>
-    );
-  }
+  const switchCategory = useCallback((c: string | null) => {
+    setCategory(c);
+    setScore(0);
+    setTotal(0);
+    setSelected(null);
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -111,54 +90,102 @@ function KvizPage() {
         </div>
       </div>
 
-      {/* Mode switcher */}
-      <div className="grid grid-cols-2 gap-2 mb-6 p-1 bg-muted rounded-lg">
-        <button
-          onClick={() => switchMode("definition")}
-          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-medium transition-colors ${
-            mode === "definition"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <BookOpen className="h-4 w-4" />
-          Погоди значење
-        </button>
-        <button
-          onClick={() => switchMode("word")}
-          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-medium transition-colors ${
-            mode === "word"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <HelpCircle className="h-4 w-4" />
-          Погоди реч
-        </button>
+      <QuizModeSelector mode={mode} onChange={switchMode} />
+
+      {/* Category filter */}
+      <div className="mb-6">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+          Категорија
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => switchCategory(null)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              category === null
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Све
+          </button>
+          {QUIZ_CATEGORIES.map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => switchCategory(key === category ? null : key)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                category === key
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label} ({count})
+            </button>
+          ))}
+        </div>
       </div>
 
+      {!question ? (
+        <div className="h-64 animate-pulse bg-muted rounded-lg" />
+      ) : (
+        <QuizBody
+          question={question}
+          mode={mode}
+          selected={selected}
+          onSelect={handleSelect}
+          onNext={nextQuestion}
+        />
+      )}
+    </div>
+  );
+}
+
+interface QuizBodyProps {
+  question: QuizQuestion;
+  mode: QuizMode;
+  selected: number | null;
+  onSelect: (id: number) => void;
+  onNext: () => void;
+}
+
+function QuizBody({ question, mode, selected, onSelect, onNext }: QuizBodyProps) {
+  return (
+    <>
       {/* Question card */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          {mode === "definition" ? (
+          {mode === "definition" && (
             <>
               <p className="text-sm text-muted-foreground mb-2">Шта значи реч:</p>
-              <h2 className="font-heading text-3xl font-bold text-foreground">
-                {question.correct.word}
-              </h2>
+              <h2 className="font-heading text-3xl font-bold text-foreground">{question.correct.word}</h2>
               {question.correct.typeFull && (
-                <Badge variant="outline" className="mt-2">{question.correct.typeFull}</Badge>
+                <Badge variant="outline" className="mt-2">
+                  {question.correct.typeFull}
+                </Badge>
               )}
             </>
-          ) : (
+          )}
+          {mode === "word" && (
             <>
               <p className="text-sm text-muted-foreground mb-2">Која реч одговара овом значењу:</p>
               <p className="font-heading text-xl text-foreground leading-snug">
                 „{question.correct.definition}"
               </p>
               {question.correct.typeFull && (
-                <Badge variant="outline" className="mt-3">{question.correct.typeFull}</Badge>
+                <Badge variant="outline" className="mt-3">
+                  {question.correct.typeFull}
+                </Badge>
               )}
+            </>
+          )}
+          {mode === "example" && (
+            <>
+              <p className="text-sm text-muted-foreground mb-2">Која реч недостаје у реченици:</p>
+              <p className="font-heading text-lg text-foreground leading-snug italic">
+                „{question.maskedExample}"
+              </p>
+              <p className="text-sm text-muted-foreground mt-3">
+                Значење: <span className="text-foreground">{question.correct.definition}</span>
+              </p>
             </>
           )}
         </CardContent>
@@ -182,7 +209,7 @@ function KvizPage() {
           }
 
           return (
-            <button key={opt.id} className={className} onClick={() => handleSelect(opt.id)}>
+            <button key={opt.id} className={className} onClick={() => onSelect(opt.id)}>
               <div className="flex items-start justify-between gap-3">
                 {mode === "definition" ? (
                   <p className="text-foreground">{opt.definition}</p>
@@ -190,7 +217,9 @@ function KvizPage() {
                   <p className="font-heading text-lg font-semibold text-foreground">{opt.word}</p>
                 )}
                 {selected !== null && isCorrect && <CheckCircle className="h-5 w-5 text-accent shrink-0" />}
-                {selected !== null && isSelected && !isCorrect && <XCircle className="h-5 w-5 text-destructive shrink-0" />}
+                {selected !== null && isSelected && !isCorrect && (
+                  <XCircle className="h-5 w-5 text-destructive shrink-0" />
+                )}
               </div>
             </button>
           );
@@ -204,22 +233,28 @@ function KvizPage() {
           ) : (
             <p className="text-destructive font-semibold mb-3">
               {mode === "definition" ? (
-                <>✗ Нетачно. Тачан одговор: <span className="text-foreground">{question.correct.definition}</span></>
+                <>
+                  ✗ Нетачно. Тачан одговор:{" "}
+                  <span className="text-foreground">{question.correct.definition}</span>
+                </>
               ) : (
-                <>✗ Нетачно. Тачна реч: <span className="text-foreground font-heading">{question.correct.word}</span></>
+                <>
+                  ✗ Нетачно. Тачна реч:{" "}
+                  <span className="text-foreground font-heading">{question.correct.word}</span>
+                </>
               )}
             </p>
           )}
-          {question.correct.examples.length > 0 && (
+          {mode !== "example" && question.correct.examples.length > 0 && (
             <p className="text-sm text-muted-foreground italic mb-4">
               „{question.correct.examples[0]}"
             </p>
           )}
-          <Button onClick={nextQuestion} className="gap-2">
+          <Button onClick={onNext} className="gap-2">
             Следеће питање →
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 }

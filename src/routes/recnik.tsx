@@ -39,7 +39,9 @@ const availableCategories = Object.entries(categoryCounts)
 function RecnikPage() {
   const [search, setSearch] = useState("");
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [categoryQuery, setCategoryQuery] = useState("");
+  const [categoryMatchAll, setCategoryMatchAll] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const filtered = useMemo(() => {
@@ -47,8 +49,13 @@ function RecnikPage() {
     if (activeLetter) {
       result = result.filter((e) => e.letter === activeLetter);
     }
-    if (activeCategory) {
-      result = result.filter((e) => e.categories?.includes(activeCategory));
+    if (activeCategories.length > 0) {
+      result = result.filter((e) => {
+        const cats = e.categories ?? [];
+        return categoryMatchAll
+          ? activeCategories.every((c) => cats.includes(c))
+          : activeCategories.some((c) => cats.includes(c));
+      });
     }
     if (search.trim()) {
       const q = search.toLowerCase().trim();
@@ -59,13 +66,29 @@ function RecnikPage() {
       );
     }
     return result;
-  }, [search, activeLetter, activeCategory]);
+  }, [search, activeLetter, activeCategories, categoryMatchAll]);
 
   // Reset visible count when filters change
-  useMemo(() => setVisible(PAGE_SIZE), [search, activeLetter, activeCategory]);
+  useMemo(() => setVisible(PAGE_SIZE), [search, activeLetter, activeCategories, categoryMatchAll]);
 
   const shown = filtered.slice(0, visible);
-  const hasFilters = activeLetter || activeCategory || search;
+  const hasFilters = activeLetter || activeCategories.length > 0 || search;
+
+  const visibleCategories = useMemo(() => {
+    const q = categoryQuery.toLowerCase().trim();
+    if (!q) return availableCategories;
+    return availableCategories.filter(
+      (c) =>
+        c.toLowerCase().includes(q) ||
+        CATEGORY_LABELS[c]?.toLowerCase().includes(q)
+    );
+  }, [categoryQuery]);
+
+  const toggleCategory = (cat: string) => {
+    setActiveCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -112,30 +135,62 @@ function RecnikPage() {
 
       {/* Category filter */}
       <div className="mb-6">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Категорија</p>
+        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Категорије {activeCategories.length > 0 && `(${activeCategories.length})`}
+          </p>
+          <div className="flex items-center gap-2">
+            {activeCategories.length >= 2 && (
+              <button
+                onClick={() => setCategoryMatchAll((v) => !v)}
+                className="text-xs px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+                title="Промени логику комбиновања"
+              >
+                {categoryMatchAll ? "све изабране" : "било која"}
+              </button>
+            )}
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                value={categoryQuery}
+                onChange={(e) => setCategoryQuery(e.target.value)}
+                placeholder="Тражи категорију..."
+                className="h-7 pl-6 text-xs w-44"
+              />
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setActiveCategory(null)}
+            onClick={() => setActiveCategories([])}
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              !activeCategory ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              activeCategories.length === 0
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
-            Све категорије
+            Све
           </button>
-          {availableCategories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-              title={CATEGORY_LABELS[cat]}
-            >
-              {CATEGORY_LABELS[cat]} ({categoryCounts[cat]})
-            </button>
-          ))}
+          {visibleCategories.map((cat) => {
+            const active = activeCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => toggleCategory(cat)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+                title={CATEGORY_LABELS[cat]}
+              >
+                {CATEGORY_LABELS[cat]} ({categoryCounts[cat]})
+              </button>
+            );
+          })}
+          {visibleCategories.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">Нема категорија за „{categoryQuery}"</p>
+          )}
         </div>
       </div>
 
@@ -151,7 +206,8 @@ function RecnikPage() {
             onClick={() => {
               setSearch("");
               setActiveLetter(null);
-              setActiveCategory(null);
+              setActiveCategories([]);
+              setCategoryQuery("");
             }}
             className="gap-1 h-8"
           >
