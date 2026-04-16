@@ -206,7 +206,8 @@ function RecnikPage() {
             onClick={() => {
               setSearch("");
               setActiveLetter(null);
-              setActiveCategory(null);
+              setActiveCategories([]);
+              setCategoryQuery("");
             }}
             className="gap-1 h-8"
           >
