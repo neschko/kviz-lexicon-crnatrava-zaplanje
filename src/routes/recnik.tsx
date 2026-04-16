@@ -39,7 +39,9 @@ const availableCategories = Object.entries(categoryCounts)
 function RecnikPage() {
   const [search, setSearch] = useState("");
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [categoryQuery, setCategoryQuery] = useState("");
+  const [categoryMatchAll, setCategoryMatchAll] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const filtered = useMemo(() => {
@@ -47,8 +49,13 @@ function RecnikPage() {
     if (activeLetter) {
       result = result.filter((e) => e.letter === activeLetter);
     }
-    if (activeCategory) {
-      result = result.filter((e) => e.categories?.includes(activeCategory));
+    if (activeCategories.length > 0) {
+      result = result.filter((e) => {
+        const cats = e.categories ?? [];
+        return categoryMatchAll
+          ? activeCategories.every((c) => cats.includes(c))
+          : activeCategories.some((c) => cats.includes(c));
+      });
     }
     if (search.trim()) {
       const q = search.toLowerCase().trim();
@@ -59,13 +66,29 @@ function RecnikPage() {
       );
     }
     return result;
-  }, [search, activeLetter, activeCategory]);
+  }, [search, activeLetter, activeCategories, categoryMatchAll]);
 
   // Reset visible count when filters change
-  useMemo(() => setVisible(PAGE_SIZE), [search, activeLetter, activeCategory]);
+  useMemo(() => setVisible(PAGE_SIZE), [search, activeLetter, activeCategories, categoryMatchAll]);
 
   const shown = filtered.slice(0, visible);
-  const hasFilters = activeLetter || activeCategory || search;
+  const hasFilters = activeLetter || activeCategories.length > 0 || search;
+
+  const visibleCategories = useMemo(() => {
+    const q = categoryQuery.toLowerCase().trim();
+    if (!q) return availableCategories;
+    return availableCategories.filter(
+      (c) =>
+        c.toLowerCase().includes(q) ||
+        CATEGORY_LABELS[c]?.toLowerCase().includes(q)
+    );
+  }, [categoryQuery]);
+
+  const toggleCategory = (cat: string) => {
+    setActiveCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
