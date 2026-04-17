@@ -50,7 +50,7 @@ export function maskWord(sentence: string, word: string): string | null {
 }
 
 function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$1");
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export interface QuizQuestion {
