@@ -44,13 +44,15 @@ export function shuffleArray<T>(arr: T[]): T[] {
 export function maskWord(sentence: string, word: string): string | null {
   if (!sentence || !word) return null;
   const stem = word.length > 4 ? word.slice(0, Math.max(3, word.length - 2)) : word;
-  const re = new RegExp(`\\b${escapeRegex(stem)}\\p{L}{0,4}\\b`, "iu");
+  // Unicode-safe word boundary: \b doesn't work on Cyrillic letters in JS regex,
+  // so we use lookbehind/lookahead on letter chars.
+  const re = new RegExp(`(?<!\\p{L})${escapeRegex(stem)}\\p{L}{0,4}(?!\\p{L})`, "iu");
   if (!re.test(sentence)) return null;
   return sentence.replace(re, "_____");
 }
 
 function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$1");
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export interface QuizQuestion {
