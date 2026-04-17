@@ -21,7 +21,14 @@ export const Route = createFileRoute("/recnik")({
 });
 
 const entries = dictionaryData as DictionaryEntry[];
-const letters = [...new Set(entries.map((e) => e.letter))].sort();
+
+// Serbian Cyrillic alphabetical order (азбучни ред)
+const SR_CYRILLIC_ORDER = [
+  "А","Б","В","Г","Д","Ђ","Е","Ж","З","И","Ј","К","Л","Љ","М",
+  "Н","Њ","О","П","Р","С","Т","Ћ","У","Ф","Х","Ц","Ч","Џ","Ш",
+];
+const presentLetters = new Set(entries.map((e) => e.letter));
+const letters = SR_CYRILLIC_ORDER.filter((l) => presentLetters.has(l));
 const PAGE_SIZE = 50;
 
 // Compute available categories with counts
